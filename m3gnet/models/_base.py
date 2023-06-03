@@ -71,16 +71,13 @@ class GraphModelMixin(tf.keras.layers.Layer):
         Returns: predicted properties
         """
         n = len(graph_list)
-        use_graph = bool(isinstance(graph_list[0], MaterialGraph))
+        use_graph = isinstance(graph_list[0], MaterialGraph)
         n_steps = math.ceil(n / batch_size)
         predicted = []
         for i in range(n_steps):
             graphs = graph_list[batch_size * i : batch_size * (i + 1)]
             graph = assemble_material_graph(graphs)  # type: ignore
-            if use_graph:
-                results = self.call(graph.as_list())
-            else:
-                results = self.call(graph)
+            results = self.call(graph.as_list()) if use_graph else self.call(graph)
             predicted.append(results)
         return tf.concat(predicted, axis=0)
 
@@ -227,9 +224,7 @@ class BasePotential(tf.keras.Model, ABC):
             results += (efs[1],)
         if include_stresses:
             results += (efs[2],)
-        if len(results) == 1:
-            return results[0]
-        return results
+        return results[0] if len(results) == 1 else results
 
 
 @register

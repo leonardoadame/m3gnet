@@ -88,11 +88,12 @@ class AtomRef(BaseAtomRef):
         """
         features = self._get_feature_matrix(structs_or_graphs)
         self.property_per_element = np.linalg.pinv(features.T.dot(features)).dot(features.T.dot(properties))
-        string_prop = ""
-        for i, j in enumerate(self.property_per_element):
-            if abs(j) > 1e-5:
-                string_prop += f"{str(Element.from_Z(i))}: {j:.5f}"
-        logger.info("Property offset values: " + string_prop)
+        string_prop = "".join(
+            f"{str(Element.from_Z(i))}: {j:.5f}"
+            for i, j in enumerate(self.property_per_element)
+            if abs(j) > 1e-5
+        )
+        logger.info(f"Property offset values: {string_prop}")
         return True
 
     def transform(self, structs_or_graphs, properties):
@@ -120,8 +121,7 @@ class AtomRef(BaseAtomRef):
         """
         properties = np.array(properties)
         property_atoms = self.predict_properties(structs_or_graphs)
-        final_properties = properties + np.reshape(property_atoms, properties.shape)
-        return final_properties
+        return properties + np.reshape(property_atoms, properties.shape)
 
     def predict_properties(self, structs_or_graphs):
         """

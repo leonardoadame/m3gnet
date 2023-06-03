@@ -49,7 +49,7 @@ def get_fixed_radius_bonding(
 
     else:
         raise ValueError("structure type not supported")
-    r = float(cutoff)
+    r = cutoff
 
     center_indices, neighbor_indices, images, distances = find_points_in_spheres(
         cart_coords,

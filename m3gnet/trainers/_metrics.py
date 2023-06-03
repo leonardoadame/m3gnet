@@ -28,6 +28,4 @@ def _get_metric_string(metric):
     if isinstance(metric, tf.keras.metrics.Metric):
         return metric.__class__.__name__
     name = metric.__name__
-    if name in REVERSE_NAME_MAPPING:
-        return REVERSE_NAME_MAPPING[name]
-    return name
+    return REVERSE_NAME_MAPPING[name] if name in REVERSE_NAME_MAPPING else name

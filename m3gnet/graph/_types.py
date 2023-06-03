@@ -164,11 +164,7 @@ def _check_n(fields, name, dim=0):
 
     Returns: int or None
     """
-    n_candidates = []
-    for i in fields:
-        if i is not None:
-            n_candidates.append(i.shape[dim])
-    if len(n_candidates) > 0:
+    if n_candidates := [i.shape[dim] for i in fields if i is not None]:
         if len(list(set(n_candidates))) > 1:
             raise ValueError(f"{name} inconsistent")
         return n_candidates[0]
@@ -285,13 +281,14 @@ class MaterialGraph(AttributeUpdateMixin):
 
     def __repr__(self):
         attributes = ALL_FIELDS
-        shapes = []
-        for attr in attributes:
-            if getattr(self, attr) is None:
-                continue
-            shapes.append(attr + " " + str(getattr(self, attr).dtype)[9:-2] + f" {str(getattr(self, attr).shape)}")
+        shapes = [
+            f"{attr} {str(getattr(self, attr).dtype)[9:-2]}"
+            + f" {str(getattr(self, attr).shape)}"
+            for attr in attributes
+            if getattr(self, attr) is not None
+        ]
         string = "\n" + "\n".join(shapes)
-        return "<MaterialGraph with the following data shapes: " + string + ">"
+        return f"<MaterialGraph with the following data shapes: {string}>"
 
     def as_tf(self) -> "MaterialGraph":
         """
@@ -299,8 +296,7 @@ class MaterialGraph(AttributeUpdateMixin):
         Returns: tf.Tensor
         """
         d = {i: _maybe_tensor(getattr(self, i)) for i in ALL_FIELDS}
-        mg = MaterialGraph(**d)  # type: ignore
-        return mg
+        return MaterialGraph(**d)
 
     @property
     def has_threebody(self) -> bool:
@@ -309,9 +305,7 @@ class MaterialGraph(AttributeUpdateMixin):
         Returns: boolean value indicator
 
         """
-        if self.n_triple_ij is not None:
-            return True
-        return False
+        return self.n_triple_ij is not None
 
     @property
     def n_atom(self) -> Optional[int]:
@@ -337,9 +331,7 @@ class MaterialGraph(AttributeUpdateMixin):
         """
         if self.states is not None:
             return self.states.shape[0]
-        if self.n_atoms is not None:
-            return len(self.n_atoms)
-        return None
+        return len(self.n_atoms) if self.n_atoms is not None else None
 
     def as_list(self) -> List:
         """
@@ -382,6 +374,4 @@ def _maybe_tensor(inp):
     Returns: tf.Tensor
 
     """
-    if inp is not None:
-        return tf.constant(inp)
-    return None
+    return tf.constant(inp) if inp is not None else None

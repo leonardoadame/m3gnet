@@ -55,9 +55,7 @@ class MaterialGraphBatch(Sequence):
         graphs = [self.graphs[i] for i in graph_indices]
         new_graph: MaterialGraph = assemble_material_graph(graphs)
         targets: np.ndarray = None if self.targets is None else self.targets[graph_indices]
-        if targets is None:
-            return new_graph
-        return new_graph, targets
+        return new_graph if targets is None else (new_graph, targets)
 
     def __len__(self) -> int:
         return self.max_step
@@ -110,9 +108,7 @@ class MaterialGraphBatchEnergyForceStress(MaterialGraphBatch):
 
 
 def _check_none_field(graph_list, field) -> bool:
-    if any(getattr(g, field, None) is None for g in graph_list):
-        return True
-    return False
+    return any((getattr(g, field, None) is None for g in graph_list))
 
 
 def _concatenate(list_of_arrays: List, name: AnyStr) -> Optional[np.ndarray]:
