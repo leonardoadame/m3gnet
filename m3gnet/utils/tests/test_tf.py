@@ -42,7 +42,7 @@ class TestTF(unittest.TestCase):
     def test_broadcast(self):
         from m3gnet.graph import Index
 
-        graph = [[] for i in range(11)]
+        graph = [[] for _ in range(11)]
         graph[Index.STATES] = np.array([[0.0, 0.0], [1.0, 1.0]])
         graph[Index.N_BONDS] = np.array([5, 6])
         self.assertTupleEqual(tuple(broadcast_states_to_bonds(graph).shape), (11, 2))
