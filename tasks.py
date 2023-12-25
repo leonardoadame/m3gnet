@@ -73,9 +73,9 @@ def release_github(ctx):
     toks = re.split(r"\#+", contents)
     desc = toks[1].strip()
     payload = {
-        "tag_name": "v" + NEW_VER,
+        "tag_name": f"v{NEW_VER}",
         "target_commitish": "main",
-        "name": "v" + NEW_VER,
+        "name": f"v{NEW_VER}",
         "body": desc,
         "draft": False,
         "prerelease": False,

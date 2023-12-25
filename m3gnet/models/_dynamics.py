@@ -213,8 +213,7 @@ class TrajectoryObserver:
         calculate the energy, here we just use the potential energy
         Returns:
         """
-        energy = self.atoms.get_potential_energy()
-        return energy
+        return self.atoms.get_potential_energy()
 
     def save(self, filename: str):
         """

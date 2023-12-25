@@ -130,11 +130,7 @@ class M3GNet(GraphModelMixin, tf.keras.models.Model):
         if include_states:
             self.graph_converter.set_default_states(np.array([[0.0, 0.0]], dtype="float32"))
 
-        if task_type.lower() == "classification":
-            act_final = "sigmoid"
-        else:
-            act_final = None
-
+        act_final = "sigmoid" if task_type.lower() == "classification" else None
         self.featurizer = GraphFeaturizer(
             n_atom_types=n_atom_types,
             atom_embedding_dim=units,
@@ -160,7 +156,7 @@ class M3GNet(GraphModelMixin, tf.keras.models.Model):
 
         self.graph_layers = []
 
-        for i in range(n_blocks):
+        for _ in range(n_blocks):
             atom_network = GatedAtomUpdate(neurons=[units, units], activation="swish")
 
             bond_network = ConcatAtoms(neurons=[units, units], activation="swish")
@@ -206,18 +202,20 @@ class M3GNet(GraphModelMixin, tf.keras.models.Model):
                     GraphNetworkLayer(atom_network=GatedAtomUpdate(neurons=[units], activation="swish"))
                 )
 
-            final_layers.append(
-                GraphNetworkLayer(
-                    atom_network=GraphUpdateFunc(
-                        update_func=GatedMLP(
-                            neurons=[units, units, 1],
-                            activations=["swish", "swish", None],
-                        ),
-                        update_field="atoms",
-                    )
+            final_layers.extend(
+                (
+                    GraphNetworkLayer(
+                        atom_network=GraphUpdateFunc(
+                            update_func=GatedMLP(
+                                neurons=[units, units, 1],
+                                activations=["swish", "swish", None],
+                            ),
+                            update_field="atoms",
+                        )
+                    ),
+                    ReduceReadOut(method="sum", field="atoms"),
                 )
             )
-            final_layers.append(ReduceReadOut(method="sum", field="atoms"))
             self.final = Pipe(layers=final_layers)
 
         if element_refs is None:
@@ -267,26 +265,22 @@ class M3GNet(GraphModelMixin, tf.keras.models.Model):
         Get config dict for serialization
         Returns:
         """
-        config = {"name": self.name}
-        config.update(
-            {
-                "max_n": self.max_n,
-                "max_l": self.max_l,
-                "n_blocks": self.n_blocks,
-                "units": self.units,
-                "cutoff": self.cutoff,
-                "threebody_cutoff": self.threebody_cutoff,
-                "include_states": self.include_states,
-                "readout": self.readout,
-                "n_atom_types": self.n_atom_types,
-                "task_type": self.task_type,
-                "is_intensive": self.is_intensive,
-                "mean": self.mean,
-                "std": self.std,
-                "element_refs": self.element_refs,
-            }
-        )
-        return config
+        return {"name": self.name} | {
+            "max_n": self.max_n,
+            "max_l": self.max_l,
+            "n_blocks": self.n_blocks,
+            "units": self.units,
+            "cutoff": self.cutoff,
+            "threebody_cutoff": self.threebody_cutoff,
+            "include_states": self.include_states,
+            "readout": self.readout,
+            "n_atom_types": self.n_atom_types,
+            "task_type": self.task_type,
+            "is_intensive": self.is_intensive,
+            "mean": self.mean,
+            "std": self.std,
+            "element_refs": self.element_refs,
+        }
 
     @classmethod
     def from_config(cls, config: dict) -> "M3GNet":
@@ -310,7 +304,7 @@ class M3GNet(GraphModelMixin, tf.keras.models.Model):
         self.save_weights(model_name)
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
-        fname = os.path.join(dirname, MODEL_NAME + ".json")
+        fname = os.path.join(dirname, f"{MODEL_NAME}.json")
         with open(fname, "w") as f:
             json.dump(model_serialized, f)
 
@@ -326,7 +320,7 @@ class M3GNet(GraphModelMixin, tf.keras.models.Model):
         """
         custom_objects = custom_objects or {}
         model_name = os.path.join(dirname, MODEL_NAME)
-        fname = os.path.join(dirname, MODEL_NAME + ".json")
+        fname = os.path.join(dirname, f"{MODEL_NAME}.json")
         if not os.path.isfile(fname):
             raise ValueError("Model does not exists")
         with open(fname) as f:

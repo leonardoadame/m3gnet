@@ -79,10 +79,7 @@ class ConcatBondAtomState(StateNetwork):
             atom_agg = self.atom_agg_func(graph)
             info_list.append(atom_agg)
 
-        if len(info_list) > 1:
-            concat = tf.concat(info_list, axis=-1)
-        else:
-            concat = info_list[0]
+        concat = tf.concat(info_list, axis=-1) if len(info_list) > 1 else info_list[0]
         return self.update_func(concat)
 
     def get_config(self) -> dict:

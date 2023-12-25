@@ -202,8 +202,7 @@ class RadiusCutoffGraphConverter(BaseGraphConverter):
         return mg
 
     def __str__(self):
-        s = f"<RadiusCutoffGraphConverter cutoff={self.cutoff}" f" threebody_cutoff={self.threebody_cutoff} >"
-        return s
+        return f"<RadiusCutoffGraphConverter cutoff={self.cutoff} threebody_cutoff={self.threebody_cutoff} >"
 
     def __repr__(self):
         return str(self)

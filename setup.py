@@ -2,6 +2,7 @@
 Installation for M3GNet
 """
 
+
 import os
 import re
 
@@ -14,10 +15,9 @@ with open(os.path.join(this_dir, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 with open("m3gnet/__init__.py", encoding="utf-8") as fd:
-    for line in fd.readlines():
-        m = re.search('__version__ = "(.*)"', line)
-        if m:
-            version = m.group(1)
+    for line in fd:
+        if m := re.search('__version__ = "(.*)"', line):
+            version = m[1]
             break
 
 setup(

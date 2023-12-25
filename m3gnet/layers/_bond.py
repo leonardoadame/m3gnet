@@ -70,13 +70,8 @@ class PairRadialBasisExpansion(BondNetwork):
             **kwargs (dict): the necessary parameters for initialize the RBF
         """
         self.rbf_type = rbf_type
-        rbf_kwds = {}
-        keys = []
-        for k in kwargs.keys():
-            if k in RBF_ALLOWED[rbf_type]["params"]:  # type: ignore
-                keys.append(k)
-        for k in keys:
-            rbf_kwds.update({k: kwargs.pop(k)})
+        keys = [k for k in kwargs if k in RBF_ALLOWED[rbf_type]["params"]]
+        rbf_kwds = {k: kwargs.pop(k) for k in keys}
         self.rbf_kwds = rbf_kwds
         self.rbf = RadialBasisFunctions(rbf_type=rbf_type, **rbf_kwds)
         if rbf_type == "Gaussian":

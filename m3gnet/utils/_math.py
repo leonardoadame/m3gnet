@@ -111,9 +111,7 @@ class SphericalBesselFunction:
         Returns: [n, max_n * max_l] spherical Bessel function results
 
         """
-        if self.smooth:
-            return self._call_smooth_sbf(r)
-        return self._call_sbf(r)
+        return self._call_smooth_sbf(r) if self.smooth else self._call_sbf(r)
 
     def _call_smooth_sbf(self, r: tf.Tensor) -> tf.Tensor:
         results = [i(r) for i in self.funcs]
@@ -219,10 +217,7 @@ class SphericalHarmonicsFunction:
         funcs = []
         theta, phi = sympy.symbols("theta phi")
         for lval in range(self.max_l):
-            if self.use_phi:
-                m_list = range(-lval, lval + 1)
-            else:
-                m_list = [0]
+            m_list = range(-lval, lval + 1) if self.use_phi else [0]
             for m in m_list:
                 func = sympy.functions.special.spherical_harmonics.Znm(lval, m, theta, phi).expand(func=True)
                 funcs.append(func)
@@ -342,12 +337,15 @@ def spherical_bessel_smooth(r, cutoff: float = 5.0, max_n: int = 10):
     )
     en = n**2 * (n + 2) ** 2 / (4 * (n + 1) ** 4 + 1)
     dn = [tf.constant(1.0)]
-    for i in range(1, max_n):
-        dn.append(1 - en[0, i] / dn[-1])
+    dn.extend(1 - en[0, i] / dn[-1] for i in range(1, max_n))
     dn = tf.stack(dn)
     gn = [fnr[:, 0]]
-    for i in range(1, max_n):
-        gn.append(1 / tf.math.sqrt(dn[i]) * (fnr[:, i] + tf.sqrt(en[0, i] / dn[i - 1]) * gn[-1]))
+    gn.extend(
+        1
+        / tf.math.sqrt(dn[i])
+        * (fnr[:, i] + tf.sqrt(en[0, i] / dn[i - 1]) * gn[-1])
+        for i in range(1, max_n)
+    )
     return tf.transpose(tf.stack(gn))
 
 
@@ -355,32 +353,30 @@ def spherical_bessel_smooth(r, cutoff: float = 5.0, max_n: int = 10):
 def _get_lambda_func(max_n, cutoff: float = 5.0):
     r = sympy.symbols("r")
     d0 = 1.0
-    en = []
-    for i in range(max_n):
-        en.append(i**2 * (i + 2) ** 2 / (4 * (i + 1) ** 4 + 1))
-
+    en = [i**2 * (i + 2) ** 2 / (4 * (i + 1) ** 4 + 1) for i in range(max_n)]
     dn = [d0]
-    for i in range(1, max_n):
-        dn.append(1 - en[i] / dn[-1])
-
-    fnr = []
-    for i in range(max_n):
-        fnr.append(
-            (-1) ** i
-            * sympy.sqrt(2.0)
-            * sympy.pi
-            / cutoff**1.5
-            * (i + 1)
-            * (i + 2)
-            / sympy.sqrt(1.0 * (i + 1) ** 2 + (i + 2) ** 2)
-            * (
-                sympy.sin(r * (i + 1) * sympy.pi / cutoff) / (r * (i + 1) * sympy.pi / cutoff)
-                + sympy.sin(r * (i + 2) * sympy.pi / cutoff) / (r * (i + 2) * sympy.pi / cutoff)
-            )
+    dn.extend(1 - en[i] / dn[-1] for i in range(1, max_n))
+    fnr = [
+        (-1) ** i
+        * sympy.sqrt(2.0)
+        * sympy.pi
+        / cutoff**1.5
+        * (i + 1)
+        * (i + 2)
+        / sympy.sqrt(1.0 * (i + 1) ** 2 + (i + 2) ** 2)
+        * (
+            sympy.sin(r * (i + 1) * sympy.pi / cutoff)
+            / (r * (i + 1) * sympy.pi / cutoff)
+            + sympy.sin(r * (i + 2) * sympy.pi / cutoff)
+            / (r * (i + 2) * sympy.pi / cutoff)
         )
-
+        for i in range(max_n)
+    ]
     gnr = [fnr[0]]
-    for i in range(1, max_n):
-        gnr.append(1 / sympy.sqrt(dn[i]) * (fnr[i] + sympy.sqrt(en[i] / dn[i - 1]) * gnr[-1]))
-
+    gnr.extend(
+        1
+        / sympy.sqrt(dn[i])
+        * (fnr[i] + sympy.sqrt(en[i] / dn[i - 1]) * gnr[-1])
+        for i in range(1, max_n)
+    )
     return [sympy.lambdify([r], sympy.simplify(i), "tensorflow") for i in gnr]

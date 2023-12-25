@@ -81,9 +81,7 @@ class MultiFieldReadout(ReadOut):
         if self.include_states and graph[Index.STATES] is not None:
             features.append(graph[Index.STATES])
 
-        if len(features) > 1:
-            return self.merge(features)
-        return features[0]
+        return self.merge(features) if len(features) > 1 else features[0]
 
     def get_config(self) -> dict:
         """

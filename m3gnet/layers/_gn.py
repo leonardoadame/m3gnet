@@ -49,8 +49,7 @@ class GraphNetworkLayer(GraphUpdate):
             **kwargs:
         Returns: tf.Tensor
         """
-        out = self.state_network(self.atom_network(self.bond_network(graph)))
-        return out
+        return self.state_network(self.atom_network(self.bond_network(graph)))
 
     def get_config(self) -> dict:
         """
@@ -95,10 +94,9 @@ def _get_bond_featurizer(nfeat_bond, n_bond_types, bond_embedding_dim, rbf_type,
                 "to the pretrained. Therefore, `centers` and `width` for "
                 "Gaussian basis expansion are needed"
             )
-        # bond attributes are distances
-        bond_network = PairRadialBasisExpansion(rbf_type="Gaussian", centers=centers, width=width)
-        return bond_network
-
+        return PairRadialBasisExpansion(
+            rbf_type="Gaussian", centers=centers, width=width
+        )
     if rbf_type.lower() == "sphericalbessel":
         max_l = kwargs.pop("max_l")
         max_n = kwargs.pop("max_n")

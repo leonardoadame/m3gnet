@@ -68,7 +68,7 @@ class TestTrainer(unittest.TestCase):
 
         n_atoms = [len(i) for i in self.structures]
         fake_forces = [np.random.normal(size=(i, 3)) for i in n_atoms]
-        fake_stress = [np.random.normal(size=(3, 3)) for i in n_atoms]
+        fake_stress = [np.random.normal(size=(3, 3)) for _ in n_atoms]
         with ScratchDir("."):
             trainer.train(
                 self.structures[:30],
