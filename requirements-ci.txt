@@ -9,3 +9,4 @@ black
 flake8
 types-tabulate==0.8.3
 pylint
+requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
